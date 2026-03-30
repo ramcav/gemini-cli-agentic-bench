@@ -1,0 +1,45 @@
+{
+  "id": "calcom_buffer_time",
+  "title": "Add buffer time between consecutive bookings in Cal.com",
+  "repo": "calcom/cal.com",
+  "commit_sha": "3b4eef12a06b7d65d1b92a0f2f725ac4bf3106e6",
+  "feature_request": "Add a buffer time setting between consecutive bookings. Back-to-back meetings are burning people out and we need breathing room between them.",
+  "phase_1_expected_questions": [
+    "Should buffer time be a per-event-type setting or a global user-level setting?",
+    "Should the buffer be a fixed duration or configurable with minimum/maximum bounds?",
+    "How should buffer time display to the person booking — as blocked-out slots, or should it be invisible and just reduce available slots?",
+    "Does buffer time apply before the booking, after the booking, or both?",
+    "Should buffer time affect existing bookings or only apply to new bookings going forward?"
+  ],
+  "phase_1_answers": {
+    "scope": "Per-event-type setting. Different event types have different needs — a 15-min check-in doesn't need the same buffer as a 60-min deep dive.",
+    "duration": "Fixed duration selected from predefined options: 5, 10, 15, 30 minutes. No custom values for v1.",
+    "display": "Invisible to the booker. Buffer time reduces available slots silently — the booker just sees fewer time slots. No UI indication that buffer time exists.",
+    "direction": "After the booking only. Before-buffer adds complexity with overlapping calculations when multiple event types exist.",
+    "existing_bookings": "Only affects new bookings. Existing bookings are not retroactively adjusted."
+  },
+  "phase_2_expected_plan_components": [
+    "Buffer time field on the event type model/schema (integer minutes, nullable)",
+    "UI control in event type settings for selecting buffer duration from predefined options",
+    "Modification to the availability/slot calculation logic to subtract buffer time after each booking",
+    "Ensure buffer time is persisted and loaded with event type configuration",
+    "API/tRPC update to accept and validate the buffer time field",
+    "Edge case: buffer time should not extend beyond the end of the user's available hours"
+  ],
+  "phase_3_test_file": "packages/ui/components/event-type-buffer/EventTypeBuffer.test.tsx",
+  "phase_3_test_paths": [
+    "packages/ui/components/event-type-buffer/EventTypeBuffer.test.tsx"
+  ],
+  "phase_3_verification_command": "yarn workspace @calcom/ui test -- --testPathPattern=EventTypeBuffer --watchAll=false",
+  "phase_4_runtime_check": "Run the TypeScript build for the UI package and the relevant scheduling logic package. Run the tests and interpret the output to verify: the buffer time selector renders with the correct predefined options, selecting a buffer value updates the event type configuration, and the slot calculation logic correctly reduces available slots by the buffer duration after existing bookings.",
+  "phase_4_runtime_type": "build_and_test",
+  "setup_commands": [
+    "yarn workspace @calcom/ui install",
+    "yarn workspace @calcom/ui build"
+  ],
+  "setup_timeout_seconds": 120,
+  "min_tool_calls": 8,
+  "difficulty": "medium",
+  "failure_mode_category": "runtime_blind",
+  "references": ["SWE-bench", "ARC-AGI-3"]
+}

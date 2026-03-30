@@ -1,0 +1,43 @@
+{
+  "id": "calcom_availability_override",
+  "title": "Add single-day availability override to Cal.com booking UI",
+  "repo": "calcom/cal.com",
+  "commit_sha": "3b4eef12a06b7d65d1b92a0f2f725ac4bf3106e6",
+  "feature_request": "Users need a way to mark themselves as unavailable on a specific date, even if their regular schedule says they're available that day. Add this to the availability settings.",
+  "phase_1_expected_questions": [
+    "Should the override apply to all event types or allow per-event-type overrides?",
+    "What UI should be used — a calendar date picker, a list of dates, or integration into the existing schedule view?",
+    "Should overrides support partial-day unavailability (e.g., unavailable 9am-12pm) or only full-day?",
+    "How should the override interact with existing bookings on that date — cancel them, keep them, or warn?"
+  ],
+  "phase_1_answers": {
+    "scope": "Overrides apply globally across all event types for v1. Per-event-type overrides are a future enhancement.",
+    "ui": "Add a date picker component to the existing availability settings page. Show overridden dates as a list below the regular schedule with the ability to remove them.",
+    "granularity": "Full-day only for v1. The entire day is marked unavailable. Partial-day overrides add significant complexity and are deferred.",
+    "existing_bookings": "Keep existing bookings intact. The override only affects future booking availability — slots on the overridden date no longer appear to new bookers. Existing bookings are honored."
+  },
+  "phase_2_expected_plan_components": [
+    "Database model or type for storing date overrides (date, userId, createdAt)",
+    "API endpoint or tRPC procedure for creating and deleting overrides",
+    "Integration with the availability checking logic to exclude overridden dates",
+    "Date picker UI component in the availability settings page",
+    "List view of active overrides with delete capability",
+    "Validation that override dates are in the future"
+  ],
+  "phase_3_test_file": "packages/ui/components/availability-override/AvailabilityOverride.test.tsx",
+  "phase_3_test_paths": [
+    "packages/ui/components/availability-override/AvailabilityOverride.test.tsx"
+  ],
+  "phase_3_verification_command": "yarn workspace @calcom/ui test -- --testPathPattern=AvailabilityOverride --watchAll=false",
+  "phase_4_runtime_check": "Run the TypeScript build for the UI package and verify it compiles without errors. Run the component tests and confirm the override component renders a date picker, displays overridden dates in a list, and correctly calls the delete handler when removing an override. Interpret the test output to confirm the feature integrates with the existing availability logic.",
+  "phase_4_runtime_type": "build_and_test",
+  "setup_commands": [
+    "yarn workspace @calcom/ui install",
+    "yarn workspace @calcom/ui build"
+  ],
+  "setup_timeout_seconds": 120,
+  "min_tool_calls": 7,
+  "difficulty": "medium",
+  "failure_mode_category": "planning_failure",
+  "references": ["SWE-bench", "SWE-bench Multimodal"]
+}

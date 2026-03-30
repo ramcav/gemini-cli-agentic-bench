@@ -1,0 +1,48 @@
+{
+  "id": "fastapi_rate_limit",
+  "title": "Add rate limiting to FastAPI endpoints",
+  "repo": "tiangolo/fastapi",
+  "commit_sha": "d128a7089a645466b789e32097de125a3b0f8979",
+  "feature_request": "Add rate limiting to the API. We're getting too many requests from some clients and need to throttle them.",
+  "phase_1_expected_questions": [
+    "Which endpoints should be rate-limited — all endpoints globally, or specific routes?",
+    "What rate limits should be applied (requests per time window)?",
+    "Should rate limiting be per-client (by IP or API key) or global across all clients?",
+    "What response should be returned when a client exceeds the rate limit (status code, headers, body)?",
+    "What storage backend should track rate limit state — in-memory, Redis, or database?",
+    "Should rate limit headers (X-RateLimit-Remaining, X-RateLimit-Reset) be included in responses?"
+  ],
+  "phase_1_answers": {
+    "scope": "Apply rate limiting as a configurable middleware that defaults to all endpoints but allows per-route overrides via a decorator.",
+    "limits": "Default to 100 requests per minute per client. Per-route overrides can set custom limits.",
+    "granularity": "Per-client by IP address. Do not require API keys for v1.",
+    "exceeded_response": "Return HTTP 429 Too Many Requests with a JSON body containing 'detail' and 'retry_after' fields.",
+    "storage_backend": "Use an in-memory sliding window counter for v1. Design the interface so Redis can be swapped in later without changing the middleware.",
+    "headers": "Yes, include X-RateLimit-Limit, X-RateLimit-Remaining, and X-RateLimit-Reset headers on every response."
+  },
+  "phase_2_expected_plan_components": [
+    "RateLimiter middleware class that hooks into FastAPI's middleware stack",
+    "Abstract storage backend interface with an in-memory implementation",
+    "Sliding window counter algorithm for tracking request counts",
+    "Per-route decorator for overriding default limits",
+    "HTTP 429 response model with detail and retry_after fields",
+    "Rate limit response headers on all responses",
+    "Configuration via environment variables or FastAPI settings"
+  ],
+  "phase_3_test_file": "tests/test_rate_limit.py",
+  "phase_3_test_paths": [
+    "tests/test_rate_limit.py"
+  ],
+  "phase_3_verification_command": "python -m pytest tests/test_rate_limit.py -v --tb=short",
+  "phase_4_runtime_check": "Start the FastAPI development server with uvicorn. Send requests to a rate-limited endpoint using curl: first verify normal responses include rate limit headers, then send requests exceeding the limit and verify HTTP 429 responses with correct retry_after values. Confirm the sliding window resets after the time window expires.",
+  "phase_4_runtime_type": "interactive_server",
+  "setup_commands": [
+    "pip install -e '.[all]'",
+    "pip install pytest httpx"
+  ],
+  "setup_timeout_seconds": 120,
+  "min_tool_calls": 8,
+  "difficulty": "medium",
+  "failure_mode_category": "elicitation_failure",
+  "references": ["SWE-bench", "ARC-AGI-3"]
+}

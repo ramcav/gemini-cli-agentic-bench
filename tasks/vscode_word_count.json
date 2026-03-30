@@ -1,0 +1,43 @@
+{
+  "id": "vscode_word_count",
+  "title": "Add word count status bar item to VS Code markdown extension",
+  "repo": "microsoft/vscode",
+  "commit_sha": "bf71412e69edfb0185fbc21df50255d98949929a",
+  "feature_request": "Add a word count feature to the markdown extension. Writers using VS Code for markdown need to see their word count without installing a separate extension.",
+  "phase_1_expected_questions": [
+    "Should the word count reflect the markdown source text or the rendered output (excluding syntax like #, *, etc.)?",
+    "Should the count update on every keystroke, on save, or on a debounced interval?",
+    "Should code blocks (fenced and inline) be included in the word count?",
+    "Where should the word count display — status bar, editor title, or an inline decoration?"
+  ],
+  "phase_1_answers": {
+    "source_vs_rendered": "Count words in the markdown source text, not the rendered output. This is simpler to implement and what writers care about — they want to know the word count of what they've typed, including headings and emphasis markers stripped of syntax.",
+    "update_frequency": "Update on a debounced interval of 300ms after the last keystroke. Real-time enough to feel responsive, but avoids performance issues on large documents.",
+    "code_blocks": "Exclude fenced code blocks (``` ... ```) from the word count. Include inline code (`word`). Writers typically don't consider code blocks part of their prose word count.",
+    "display_location": "Status bar item on the right side, visible only when a markdown file is active. Format: '1,234 words'. Hide when a non-markdown file is active."
+  },
+  "phase_2_expected_plan_components": [
+    "Status bar item provider that registers when the markdown extension activates",
+    "Word counting function that parses markdown source and excludes fenced code blocks",
+    "Debounced document change listener (300ms) to trigger recount",
+    "Active editor change listener to show/hide the status bar item based on file language",
+    "Integration with the existing markdown extension's activation events",
+    "Proper disposal of listeners and status bar item on deactivation"
+  ],
+  "phase_3_test_file": "extensions/markdown-language-features/src/test/wordCount.test.ts",
+  "phase_3_test_paths": [
+    "extensions/markdown-language-features/src/test/wordCount.test.ts"
+  ],
+  "phase_3_verification_command": "cd extensions/markdown-language-features && npm test -- --grep 'word count'",
+  "phase_4_runtime_check": "Run the markdown extension's test suite and verify the word count tests pass. Interpret the test output to confirm: the word count function correctly counts words in plain markdown, correctly excludes fenced code blocks, correctly includes inline code, and the status bar item registers and updates. Verify the TypeScript compilation succeeds without errors.",
+  "phase_4_runtime_type": "build_and_test",
+  "setup_commands": [
+    "yarn --frozen-lockfile",
+    "cd extensions/markdown-language-features && npm install"
+  ],
+  "setup_timeout_seconds": 120,
+  "min_tool_calls": 6,
+  "difficulty": "easy",
+  "failure_mode_category": "tdd_skip",
+  "references": ["SWE-bench", "ARC-AGI-3"]
+}

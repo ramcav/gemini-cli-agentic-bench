@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Gemini CLI Agentic Benchmark Task",
+  "description": "Schema for a lifecycle benchmark task that requires requirements elicitation, implementation planning, red-green TDD, and runtime validation.",
+  "type": "object",
+  "required": [
+    "id",
+    "title",
+    "repo",
+    "commit_sha",
+    "feature_request",
+    "phase_1_expected_questions",
+    "phase_1_answers",
+    "phase_2_expected_plan_components",
+    "phase_3_test_file",
+    "phase_3_test_paths",
+    "phase_3_verification_command",
+    "phase_4_runtime_check",
+    "phase_4_runtime_type",
+    "setup_commands",
+    "min_tool_calls",
+    "difficulty",
+    "failure_mode_category",
+    "references"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$",
+      "description": "Unique task identifier in snake_case."
+    },
+    "title": {
+      "type": "string",
+      "description": "Human-readable task title."
+    },
+    "repo": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$",
+      "description": "GitHub repository in owner/repo format."
+    },
+    "commit_sha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$",
+      "description": "Full 40-character commit SHA to pin the task to."
+    },
+    "feature_request": {
+      "type": "string",
+      "description": "Deliberately underspecified feature request. Must contain ambiguities that require clarification."
+    },
+    "phase_1_expected_questions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 2,
+      "description": "Ambiguities the agent should surface during requirements elicitation."
+    },
+    "phase_1_answers": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Canonical answers to expected questions, keyed by question/ambiguity topic."
+    },
+    "phase_2_expected_plan_components": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 2,
+      "description": "Required elements the implementation plan must address."
+    },
+    "phase_3_test_file": {
+      "type": "string",
+      "description": "Primary test file path that must fail before implementation."
+    },
+    "phase_3_test_paths": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "Test file paths the agent is expected to create in phase 3a. Runner verifies these exist before running the verification command."
+    },
+    "phase_3_verification_command": {
+      "type": "string",
+      "description": "Shell command to run tests. Must exit non-zero before implementation, zero after."
+    },
+    "phase_4_runtime_check": {
+      "type": "string",
+      "description": "Description of the runtime state to validate in phase 4."
+    },
+    "phase_4_runtime_type": {
+      "type": "string",
+      "enum": ["interactive_server", "build_and_test", "browser_mcp"],
+      "description": "Type of runtime validation. interactive_server: agent starts a server and hits endpoints. build_and_test: agent runs build/tests and interprets output. browser_mcp: agent uses browser MCP tooling (future work)."
+    },
+    "setup_commands": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Commands to run sequentially in the cloned repo directory before handing off to the agent."
+    },
+    "setup_timeout_seconds": {
+      "type": "integer",
+      "default": 120,
+      "minimum": 10,
+      "description": "Maximum time in seconds for all setup commands to complete. Defaults to 120."
+    },
+    "min_tool_calls": {
+      "type": "integer",
+      "minimum": 3,
+      "description": "Minimum total tool calls across all phases. Tasks must require at least 3 sequential dependent tool calls by design."
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": ["easy", "medium", "hard"],
+      "description": "Task difficulty tier."
+    },
+    "failure_mode_category": {
+      "type": "string",
+      "enum": [
+        "elicitation_failure",
+        "planning_failure",
+        "tdd_skip",
+        "runtime_blind",
+        "tool_sequence_error"
+      ],
+      "description": "The primary failure mode this task is designed to catch. tool_sequence_error is a design-time label only and never appears in runtime results."
+    },
+    "references": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Benchmark references this task relates to (e.g., SWE-bench, ARC-AGI-3)."
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,46 @@
+{
+  "id": "fastapi_websocket",
+  "title": "Add WebSocket real-time notification support to FastAPI",
+  "repo": "tiangolo/fastapi",
+  "commit_sha": "d128a7089a645466b789e32097de125a3b0f8979",
+  "feature_request": "We need real-time notifications via WebSocket. Clients should be able to connect and receive updates when things happen in the system.",
+  "phase_1_expected_questions": [
+    "What events should trigger notifications — specific model changes, API actions, or external webhooks?",
+    "Should WebSocket connections require authentication, and if so, how (token in query param, first message, or header)?",
+    "What message format should notifications use (plain text, JSON with schema, or a protocol like JSON-RPC)?",
+    "Should the server support broadcasting to all connected clients, or targeted notifications to specific clients/groups?",
+    "How should the server handle client disconnections and reconnections — any state recovery or message replay?"
+  ],
+  "phase_1_answers": {
+    "events": "Notifications are triggered by POST/PUT/DELETE operations on any registered resource. Use a simple pub/sub pattern where API endpoints publish events after successful operations.",
+    "authentication": "Require a bearer token passed as a query parameter on the WebSocket URL. Validate using the same auth logic as REST endpoints. Reject unauthenticated connections with a close frame.",
+    "message_format": "JSON with a fixed schema: {\"event\": \"resource.action\", \"data\": {...}, \"timestamp\": \"ISO8601\"}. Define event names as resource.created, resource.updated, resource.deleted.",
+    "targeting": "Support both broadcast and channel-based subscriptions. Clients send a subscribe message with a channel name (resource type) after connecting. Only receive events for subscribed channels.",
+    "reconnection": "No message replay for v1. Clients that disconnect miss events. Document this limitation and note that message queuing (Redis pub/sub) is the path to replay support."
+  },
+  "phase_2_expected_plan_components": [
+    "WebSocket endpoint handler with connection lifecycle management",
+    "Authentication middleware for WebSocket connections via query parameter token",
+    "Channel-based subscription mechanism (subscribe/unsubscribe messages)",
+    "Event publisher that API endpoints call after mutations",
+    "Connection manager tracking active connections and their subscriptions",
+    "JSON message schema for events with event type, data, and timestamp",
+    "Graceful handling of disconnections and invalid messages"
+  ],
+  "phase_3_test_file": "tests/test_websocket_notifications.py",
+  "phase_3_test_paths": [
+    "tests/test_websocket_notifications.py"
+  ],
+  "phase_3_verification_command": "python -m pytest tests/test_websocket_notifications.py -v --tb=short",
+  "phase_4_runtime_check": "Start the FastAPI development server. Open a WebSocket connection using a tool like websocat or python-websockets, authenticate with a valid token, subscribe to a channel, then trigger a POST request via curl to a resource endpoint. Verify that the WebSocket client receives a correctly formatted notification event. Also verify that unauthenticated connections are rejected.",
+  "phase_4_runtime_type": "interactive_server",
+  "setup_commands": [
+    "pip install -e '.[all]'",
+    "pip install pytest httpx pytest-asyncio websockets"
+  ],
+  "setup_timeout_seconds": 120,
+  "min_tool_calls": 10,
+  "difficulty": "hard",
+  "failure_mode_category": "tool_sequence_error",
+  "references": ["SWE-bench", "ARC-AGI-3"]
+}
