@@ -62,8 +62,12 @@ def count_tool_calls(activity_log: list[dict[str, Any]]) -> int:
     return count
 
 
-def score_task(task: dict[str, Any], execution: ExecutionResult) -> TaskScore:
-    """Score all phases of an executed task. Returns a complete TaskScore."""
+def score_task(task: dict[str, Any], execution: ExecutionResult, *, skip_judge: bool = False) -> TaskScore:
+    """Score all phases of an executed task. Returns a complete TaskScore.
+
+    If skip_judge is True, phases 1, 2, and 4 are marked as skipped
+    (no LLM calls). Phase 3 deterministic scoring still runs.
+    """
     task_id = task["id"]
 
     # Handle setup failure
@@ -86,7 +90,12 @@ def score_task(task: dict[str, Any], execution: ExecutionResult) -> TaskScore:
 
     # Phase 1: Requirements elicitation (LLM judge)
     p1_output = execution.phase_outputs.get("phase_1")
-    if p1_output:
+    if p1_output and skip_judge:
+        result.phase_scores["phase_1"] = PhaseScore(
+            phase="phase_1", passed=False, failure_mode=None,
+            details={"skipped": "judge disabled via --no-judge"},
+        )
+    elif p1_output:
         try:
             judge_result = score_phase_1(
                 feature_request=task["feature_request"],
@@ -118,7 +127,12 @@ def score_task(task: dict[str, Any], execution: ExecutionResult) -> TaskScore:
 
     # Phase 2: Implementation planning (LLM judge)
     p2_output = execution.phase_outputs.get("phase_2")
-    if p2_output:
+    if p2_output and skip_judge:
+        result.phase_scores["phase_2"] = PhaseScore(
+            phase="phase_2", passed=False, failure_mode=None,
+            details={"skipped": "judge disabled via --no-judge"},
+        )
+    elif p2_output:
         answers_text = "\n".join(
             f"- {k}: {v}" for k, v in task["phase_1_answers"].items()
         )
@@ -198,7 +212,12 @@ def score_task(task: dict[str, Any], execution: ExecutionResult) -> TaskScore:
 
     # Phase 4: Runtime validation (LLM judge)
     p4_output = execution.phase_outputs.get("phase_4")
-    if p4_output:
+    if p4_output and skip_judge:
+        result.phase_scores["phase_4"] = PhaseScore(
+            phase="phase_4", passed=False, failure_mode=None,
+            details={"skipped": "judge disabled via --no-judge"},
+        )
+    elif p4_output:
         try:
             judge_result = score_phase_4(
                 feature_request=task["feature_request"],

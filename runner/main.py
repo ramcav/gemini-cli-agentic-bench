@@ -82,6 +82,10 @@ def main() -> None:
         "--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR,
         help="Output directory for results",
     )
+    parser.add_argument(
+        "--no-judge", action="store_true",
+        help="Skip LLM-as-judge scoring for phases 1, 2, 4. Only run deterministic phase 3 scoring.",
+    )
     args = parser.parse_args()
 
     schema = _load_schema()
@@ -114,7 +118,7 @@ def main() -> None:
         print(f"{'='*60}")
 
         execution = execute_task(task)
-        score = score_task(task, execution)
+        score = score_task(task, execution, skip_judge=args.no_judge)
 
         print_task_progress(task["id"], score)
 

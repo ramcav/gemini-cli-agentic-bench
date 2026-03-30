@@ -1,7 +1,9 @@
 """LLM-as-judge for scoring phases 1, 2, and 4.
 
-Uses the Anthropic SDK to call the configured judge model. Returns structured
-scores or a judge_error sentinel when the model returns malformed JSON.
+Supports both Anthropic and OpenAI as judge backends. Set JUDGE_PROVIDER
+to "openai" and OPENAI_API_KEY to use OpenAI. Defaults to Anthropic.
+Returns structured scores or a judge_error sentinel when the model returns
+malformed JSON.
 """
 
 from __future__ import annotations
@@ -10,8 +12,6 @@ import json
 import os
 from dataclasses import dataclass
 from typing import Any
-
-import anthropic
 
 from judge.prompts import PHASE_1_TEMPLATE, PHASE_2_TEMPLATE, PHASE_4_TEMPLATE
 
@@ -28,12 +28,13 @@ class JudgeResult:
         return self.error is not None
 
 
-def _get_client() -> anthropic.Anthropic:
-    return anthropic.Anthropic()
+def _get_provider() -> str:
+    return os.environ.get("JUDGE_PROVIDER", "anthropic").lower()
 
 
 def _get_model() -> str:
-    return os.environ.get("JUDGE_MODEL", "claude-sonnet-4-6")
+    default = "claude-sonnet-4-6" if _get_provider() == "anthropic" else "gpt-4o"
+    return os.environ.get("JUDGE_MODEL", default)
 
 
 def _get_threshold() -> float:
@@ -41,14 +42,27 @@ def _get_threshold() -> float:
 
 
 def _call_judge(prompt: str) -> str:
-    client = _get_client()
+    provider = _get_provider()
     model = _get_model()
-    response = client.messages.create(
-        model=model,
-        max_tokens=2048,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return response.content[0].text
+
+    if provider == "openai":
+        import openai
+        client = openai.OpenAI()
+        response = client.chat.completions.create(
+            model=model,
+            max_tokens=2048,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return response.choices[0].message.content
+    else:
+        import anthropic
+        client = anthropic.Anthropic()
+        response = client.messages.create(
+            model=model,
+            max_tokens=2048,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return response.content[0].text
 
 
 def _parse_json(raw: str) -> dict[str, Any]:
